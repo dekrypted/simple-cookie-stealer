@@ -1,4 +1,4 @@
-webhook = "https://discord.com/api/webhooks/1027262893512728656/mQ_Nf4uZ_5sHqEpSwpGcCCUgIZPEy3tz-ukrgfYvJVdM11Dbb8UaIulon3w38g3Mht-y" # WEBHOOK HERE
+webhook = "" # WEBHOOK HERE
 
 import os
 import json
