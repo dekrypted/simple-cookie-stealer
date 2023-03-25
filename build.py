@@ -188,7 +188,7 @@ try:
 
     open(f"tmp_{id}.py", "w").write(newcode)
 
-    os.system(f"pyinstaller --clean --onefile tmp_{id}.py")
+    os.system(f"python -m pyinstaller --clean --onefile tmp_{id}.py")
 
     shutil.copy2(f"dist\\tmp_{id}.exe", "output.exe")
     shutil.rmtree("dist")
