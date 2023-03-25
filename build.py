@@ -199,5 +199,7 @@ try:
     os.system("cls")
 
     print("Done!\nYou can rename to file\nTo change the icon, download a .ico file as well as Resource Hacker. Then replace the resource. You can find a tutorial on how to do this on YouTube.")
+    while True: pass
 except Exception:
     print(traceback.format_exc() + "\n\nAn Error occured! See above, and make an issue on the GitHub repository or contact me if you can't solve it yourself!")
+    while True: pass
