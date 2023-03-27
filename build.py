@@ -3,6 +3,7 @@ import base64
 import shutil
 import marshal
 import traceback
+import subprocess
 
 if "Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Manage App Execution Aliases." in subprocess.check_output("python --version").decode():
     os.system("powershell Remove-Item $env:LOCALAPPDATA\Microsoft\WindowsApps\python.exe") # Remove the bugged app alias that Microsoft added (Because Microsoft doesn't do anything right)
