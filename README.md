@@ -3,6 +3,8 @@
 **Simple Cookie Stealer** is probably both the most basic and best Cookie Stealer out there. <br>
 It is not bloated with flashy embeds, images, or features. Instead, it strives to be extremely fast and small, and steal from all browsers.
 
+If you're struggling, the [Video Tutorial](https://youtu.be/iSMlgeEVqvE) may help.
+
 # 💎 Features
 
 * One Clean Test File (No Webhook Spams)
