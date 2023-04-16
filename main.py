@@ -21,17 +21,11 @@ def safe(func):
             pass
     return wrapper
 
-def generate_dll_names(amount: int) -> list[str]:
-    dll_names = []
-    
-    for _ in range(amount):
-        dll_name = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
-        dll_name += ".dll"
-        dll_names.append(dll_name)
+def generate_dll_name() -> str:
+    dll_name = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
+    dll_name += ".dll"
         
-    return dll_names
-
-fake_errors: list[str] = []
+    return dll_name
 
 class CookieLogger:
 
