@@ -69,6 +69,7 @@ class GUI(customtkinter.CTk):
         self.geometry("700x400")
         self.resizable(False, False)
         customtkinter.set_default_color_theme("theme.json")
+        customtkinter.set_appearance_mode("Dark")
 
         GeneralLabel = customtkinter.CTkLabel(master=self, text="Cookie Stealer", font=("Arial", 20))
         GeneralLabel.place(x=5, y=5)
