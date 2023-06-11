@@ -56,7 +56,7 @@ def build():
     shutil.copy2("dist\\" + filename.replace(".py", ".exe"), filename.replace(".py", ".exe"))
     shutil.rmtree("dist")
     os.remove(filename.replace(".py", ".spec"))
-    shutil.rmtree(_filename)
+    if virtualenvir: shutil.rmtree(_filename)
     os.rename(filename.replace(".py", ".exe"), f"{inputFileName}.{comboBoxFileType.lower()}")
 
 class GUI(customtkinter.CTk):
