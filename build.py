@@ -11,6 +11,7 @@ try:
     import requests
     import threading
 except ImportError:
+    import ctypes
     ctypes.windll.user32.MessageBoxW(0, "Please install the required libraries in requirements.txt", "Error", 0)
     exit()
 
